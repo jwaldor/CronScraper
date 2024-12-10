@@ -1,0 +1,11 @@
+// This assumes you already have the datasource and generator blocks set up
+model ScrapeJob {
+    id            Int      @id @default(autoincrement())
+    url           String
+    requestString String
+    lastPageBody  String?
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    @@map("scrape_jobs")
+}
