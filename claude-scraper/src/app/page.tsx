@@ -1,6 +1,22 @@
+"use client";
+
 import Image from "next/image";
 
 export default function Home() {
+  const executeCron = async () => {
+    try {
+      const response = await fetch('/api/crontest', {
+        method: 'GET'
+      });
+      const data = await response.json();
+      console.log('Cron execution result:', data);
+      alert(data.message || 'Cron job executed');
+    } catch (error) {
+      console.error('Failed to execute cron:', error);
+      alert('Failed to execute cron job');
+    }
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
@@ -12,6 +28,12 @@ export default function Home() {
           height={38}
           priority
         />
+        <button
+          onClick={executeCron}
+          className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+        >
+          Execute Cron
+        </button>
         <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2">
             Get started by editing{" "}

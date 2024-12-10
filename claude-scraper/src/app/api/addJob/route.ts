@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { addJob, addJobSchema } from "../services/job";
 import { z } from "zod";
-
-// Input validation schema
-const addJobSchema = z.object({
-  url: z.string().url(),
-  requestString: z.string(),
-  lastPageBody: z.string().optional(),
-});
 
 export async function POST(request: Request) {
   try {
@@ -16,16 +9,8 @@ export async function POST(request: Request) {
     // Validate input
     const validated = addJobSchema.parse(body);
 
-    // Add job to database
-    const job = await db.scrapeJob.create({
-      data: {
-        url: validated.url,
-        requestString: validated.requestString,
-        lastPageBody: validated.lastPageBody || null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    });
+    // Add job using service
+    const job = await addJob(validated);
 
     return NextResponse.json(
       {

@@ -1,4 +1,13 @@
 // This assumes you already have the datasource and generator blocks set up
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
 model ScrapeJob {
     id            Int      @id @default(autoincrement())
     url           String
