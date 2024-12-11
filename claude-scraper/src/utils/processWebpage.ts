@@ -1,14 +1,10 @@
 import axios from "axios";
 import Anthropic from "@anthropic-ai/sdk";
-import puppeteer from "puppeteer";
+import { Browser } from "puppeteer";
 
 if (!process.env.ANTHROPIC_API_KEY) {
   throw new Error("ANTHROPIC_API_KEY is not set");
 }
-// Launch the browser
-const browser = await puppeteer.launch({
-  headless: true, // Use new headless mode
-});
 
 // Initialize the Claude client
 const anthropic = new Anthropic({
@@ -73,7 +69,10 @@ Task: ${prompt}`;
   }
 }
 
-export async function extractPageText(url: string): Promise<string | null> {
+export async function extractPageText(
+  url: string,
+  browser: Browser
+): Promise<string | null> {
   try {
     // Create a new page
     const page = await browser.newPage();

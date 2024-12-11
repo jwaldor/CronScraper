@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { addJob, addJobSchema } from "../services/job";
 import { z } from "zod";
+import { processCronJobAddJob } from "../processes/cron";
 
 export async function POST(request: Request) {
   try {
@@ -11,6 +12,7 @@ export async function POST(request: Request) {
 
     // Add job using service
     const job = await addJob(validated);
+    processCronJobAddJob(job);
 
     return NextResponse.json(
       {
