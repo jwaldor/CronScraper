@@ -10,7 +10,7 @@ generator client {
 
 model ScrapeJob {
     id            Int      @id @default(autoincrement())
-    url           String
+    url           String   @unique
     requestString String
     lastPageBody  String?
     createdAt     DateTime @default(now())

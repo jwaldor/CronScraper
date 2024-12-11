@@ -1,21 +1,30 @@
 import { NextResponse } from "next/server";
-import { addJob, addJobSchema } from "../services/job";
+import { addUpdateJob, addJobSchema } from "../services/job";
 import { z } from "zod";
+import { processCronJobAddJob } from "../processes/cron";
 
 export async function POST(request: Request) {
   try {
+    console.error("request", request);
     const body = await request.json();
+    console.error("body", body);
 
     // Validate input
+    console.log("validating with", addJobSchema);
     const validated = addJobSchema.parse(body);
+    console.log("validated", validated);
 
     // Add job using service
-    const job = await addJob(validated);
+    const job = await addUpdateJob(validated);
+    console.log("job", job);
+    const scrapedContent = await processCronJobAddJob(job);
+    console.log("scrapedContent", scrapedContent);
 
     return NextResponse.json(
       {
         status: "success",
         data: job,
+        content: scrapedContent,
       },
       { status: 201 }
     );
