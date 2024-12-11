@@ -12,12 +12,13 @@ export async function POST(request: Request) {
 
     // Add job using service
     const job = await addJob(validated);
-    processCronJobAddJob(job);
+    const scrapedContent = await processCronJobAddJob(job);
 
     return NextResponse.json(
       {
         status: "success",
         data: job,
+        content: scrapedContent,
       },
       { status: 201 }
     );
