@@ -9,6 +9,14 @@ const ScrapeArgumentsSchema = z.object({
     url: z.string(),
     requestedInformation: z.string(),
 });
+// Define Zod schemas for validation
+const GetScrapeArgumentsSchema = z.object({
+    url: z.string(),
+});
+const UpdateScrapeArgumentsSchema = z.object({
+    url: z.string(),
+    requestedInformation: z.string(),
+});
 // Create server instance
 const server = new Server({
     name: "scrape_page",
@@ -23,7 +31,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
         tools: [
             {
-                name: "scrape_page",
+                name: "add_scrape_page_job",
                 description: "Scrape a page for information on a regular basis.",
                 inputSchema: {
                     type: "object",
@@ -40,6 +48,36 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                     required: ["url", "requestedInformation"],
                 },
             },
+            {
+                name: "get_scrape_page_job_by_url",
+                description: "Get a scraping job by its URL to view its current requestedInformation",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        url: {
+                            type: "string",
+                            description: "The URL of the page that is being scraped",
+                        },
+                    },
+                },
+            },
+            {
+                name: "update_scrape_page_job",
+                description: "Update a scraping job by its URL to change its requestedInformation",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        url: {
+                            type: "string",
+                            description: "The URL of the page that is being scraped",
+                        },
+                        requestedInformation: {
+                            type: "string",
+                            description: "The new information to scrape from the page. Make this as specific and descriptive as possible and in accordance with the user's wishes.",
+                        },
+                    },
+                },
+            },
         ],
     };
 });
@@ -54,6 +92,50 @@ async function makeScrapeRequest(url, requestString) {
             },
             body: JSON.stringify({ url, requestString }),
         });
+        console.error("response", response);
+        console.error("response.body", response.body);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return (await response.json());
+    }
+    catch (error) {
+        console.error("Error making request:", error);
+        return null;
+    }
+}
+async function makeGetScrapeRequest(url) {
+    try {
+        const response = await fetch(`${SERVER_ADDRESS_BASE}/getJobByUrl`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url }),
+        });
+        console.error("response", response);
+        console.error("response.body", response.body);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return (await response.json());
+    }
+    catch (error) {
+        console.error("Error making request:", error);
+        return null;
+    }
+}
+async function makeUpdateScrapeRequest(url, requestedInformation) {
+    try {
+        const response = await fetch(`${SERVER_ADDRESS_BASE}/updateJob`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url, requestedInformation }),
+        });
+        console.error("response", response);
+        console.error("response.body", response.body);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -68,7 +150,7 @@ async function makeScrapeRequest(url, requestString) {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     try {
-        if (name === "scrape_page") {
+        if (name === "add_scrape_page_job") {
             const { url, requestedInformation } = ScrapeArgumentsSchema.parse(args);
             const scrapeData = await makeScrapeRequest(url, requestedInformation);
             if (!scrapeData) {
@@ -76,7 +158,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     content: [
                         {
                             type: "text",
-                            text: "Failed to retrieve add scraping job",
+                            text: `Failed to add scraping job: ${JSON.stringify(args)}, url: ${url}, requestedInformation: ${requestedInformation}`,
                         },
                     ],
                 };
@@ -85,7 +167,51 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 content: [
                     {
                         type: "text",
-                        text: `Successfully added scraping job: ${scrapeData}`,
+                        text: `Successfully added scraping job: ${JSON.stringify(scrapeData)}`,
+                    },
+                ],
+            };
+        }
+        else if (name === "get_scrape_page_job_by_url") {
+            const { url } = GetScrapeArgumentsSchema.parse(args);
+            const scrapeData = await makeGetScrapeRequest(url);
+            if (!scrapeData) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to get scraping job: ${JSON.stringify(args)}`,
+                        },
+                    ],
+                };
+            }
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `Successfully got scraping job: ${JSON.stringify(scrapeData)}`,
+                    },
+                ],
+            };
+        }
+        else if (name === "update_scrape_page_job") {
+            const { url, requestedInformation } = UpdateScrapeArgumentsSchema.parse(args);
+            const scrapeData = await makeUpdateScrapeRequest(url, requestedInformation);
+            if (!scrapeData) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Failed to update scraping job: ${JSON.stringify(args)}`,
+                        },
+                    ],
+                };
+            }
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `Successfully updated scraping job: ${JSON.stringify(scrapeData)}`,
                     },
                 ],
             };
@@ -112,7 +238,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("Weather MCP Server running on stdio");
+    console.error("Create Cron MCP Server running on stdio");
 }
 main().catch((error) => {
     console.error("Fatal error in main():", error);
